@@ -53,6 +53,6 @@ gmx_mpi sham -f proj_pc1_pc2.xvg -ls fel_pc1_pc2.xpm -notime
 gmx_mpi xpm2ps -f fel_pc1_pc2.xpm -o fel_pc1_pc2.eps -rainbow red
 
 # 9. (Optional) View results
-#xmgrace eigenvalues.xvg
-#xmgrace proj_pc1_pc2.xvg
-#vmd pc1_extreme.pdb          # toggle the 2 frames to visualize the PC1 motion
+xmgrace eigenvalues.xvg
+xmgrace proj_pc1_pc2.xvg
+vmd pc1_extreme.pdb          # toggle the 2 frames to visualize the PC1 motion
