@@ -260,6 +260,9 @@ gmx_mpi energy -f MD.edr -o energy1.xvg
 #Choose the option of your choice
 xmgrace -nxy energy1.xvg
 
+-------------ENERGY Calculations---------------
+gmx_mpi dssp -s md_0_200.tpr -f md_0_200_center.xtc -tu ns -hmode dssp -o dssp.dat -num dssp.xvg
+
 -----------(Merge tragectories)-----------------
 
 gmx_mpi trjcat -f traj_1.xtc traj_2.xtc -o final_traj.xtc
