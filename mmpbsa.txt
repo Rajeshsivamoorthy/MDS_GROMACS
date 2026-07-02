@@ -1,0 +1,128 @@
+$ gmxMMPBSA Installation:
+Method 1:
+ >conda env create --file env.yml (file attached)
+ >conda activate gmxMMPBSA
+
+
+$ Method 2:
+ >conda create -n mmpbsa python=3.9
+ >conda install -c conda-forge ambertools=22 
+ >conda install parmed pyqt5
+ >python -m pip install gmx-mmpbsa
+ >gmx_MMPBSA -h
+
+$ Method 3:
+ >conda create -n mmpbsa python=3.9
+ >conda activate mmpbsa 
+ >conda install -c conda-forge mpi4py
+ >conda install -c conda-forge ambertools=21 compilers 
+ >python -m pip install gmx_MMPBSA
+
+$ After Installation test installation using
+ >gmx_MMPBSA_test
+
+$ Files required to run MMPBSA analysis
+  * index.ndx
+  * Forcefield file(ex: charmmforcefield)
+  * unk.itp
+  * unk.prm
+  * topol.top
+  * md.gro
+  * md.tpr
+  * md_center_fix.xtc
+  
+$ Activate Conda environment  
+ > conda activate gmxMMPBSA
+
+$ Create Input file to run MMPBSA
+ > gmx_MMPBSA --create_input (or) gmx_MMPBSA --create_input pb gb decomp
+
+" In mmpbsa.in file change time frame, as which frames needs to be analyse. in decomposition part input idecomp as "2" & verbose "3" "
+
+$ Run MMPBSA analysis
+ > mpirun -n 15 gmx_MMPBSA -O -i mmpbsa.in -cs md.tpr -ct md_center_fit.xtc -ci index.ndx -cg 1 13 -cp topol.top -o results.dat -eo results.csv
+
+$LPH Error:
+ " LPH errors can occurs if ligand contains pseudo-atoms(Br, Cl, etc.,), if encountered the errors follow the process as mentions"
+ * First generate the index file excluding the LPH atoms in ligands
+
+ > 13
+
+  0 System              : 70483 atoms
+  1 Protein             :  5580 atoms
+  2 Protein-H           :  2817 atoms
+  3 C-alpha             :   334 atoms
+  4 Backbone            :  1002 atoms
+  5 MainChain           :  1335 atoms
+  6 MainChain+Cb        :  1654 atoms
+  7 MainChain+H         :  1654 atoms
+  8 SideChain           :  3926 atoms
+  9 SideChain-H         :  1482 atoms
+ 10 Prot-Masses         :  5580 atoms
+ 11 non-Protein         : 64903 atoms
+ 12 Other               : 64903 atoms
+ 13 3G5                 :    32 atoms
+ 14 CLA                 :    62 atoms
+ 15 SOD                 :    63 atoms
+ 16 TIP3                : 64746 atoms
+
+Splitting the ligand (group 13) by atoms
+>splitat 13
+
+Grouping both LPH particles
+>47|48
+
+Excluding both LPH particles from the ligand
+>13&!49
+
+Naming ligand as lig
+>name 50 lig
+
+Grouping rec and lig
+>1|50
+
+Cleaning
+>del 17-49
+
+save and quit
+>q
+
+This is how it should look like at the end
+
+  0 System              : 70483 atoms
+  1 Protein             :  5580 atoms
+  2 Protein-H           :  2817 atoms
+  3 C-alpha             :   334 atoms
+  4 Backbone            :  1002 atoms
+  5 MainChain           :  1335 atoms
+  6 MainChain+Cb        :  1654 atoms
+  7 MainChain+H         :  1654 atoms
+  8 SideChain           :  3926 atoms
+  9 SideChain-H         :  1482 atoms
+ 10 Prot-Masses         :  5580 atoms
+ 11 non-Protein         : 64903 atoms
+ 12 Other               : 64903 atoms
+ 13 3G5                 :    32 atoms
+ 14 CLA                 :    62 atoms
+ 15 SOD                 :    63 atoms
+ 16 TIP3                : 64746 atoms
+ 17 lig                 :    30 atoms
+ 18 Protein_lig         :  5610 atoms
+
+Note that the number of atoms in the generated complex is 5610 because it doesn't include the LPH particles.
+
+$ Let's generate the MD Structure+mass(db) file:
+ > echo 18 | gmx trjconv -s com.tpr -f traj_fit.xtc -dump 0 -o str_noLP.pdb -n index_mod_gromacs.ndx
+
+$ Open str_noLP.pdb in your favorite visualizer and see it doesn't contain the LPH particles. Now, let's generate the trajectory with no LPH particles:
+ >echo 18 | gmx trjconv -s com.tpr -f traj_fit.xtc -o com_traj.xtc -n index_mod_gromacs.ndx
+
+Finally, let's edit the topology file. Go inside the toppar folder and open the HETA.itp file. As you will see, we deleted all the information related with LPH particles (atom numbers 31, and 32 respectively). In this case, we deleted the information for LPH particles in atoms (lines 47, 48) and pairs (lines 124, 132, 150, 153, 154, 157, 158, 159). Besides, delete the whole [ virtual_sites3 ] (lines 296-299) and [ exclusions ] (lines 301-318) fields. The original .itp (HETA_original_with_LPH_info.itp) is included for comparison purposes.
+
+$ To run the LPH atoms containing complexes:
+ > gmx_MMPBSA -O -i mmpbsa.in -cs str_noLP.pdb -ci index_mod_gromacs.ndx -cg 1 17 -ct com_traj.xtc -cp topol.top -o FINAL_RESULTS_MMPBSA.dat -eo FINAL_RESULTS_MMPBSA.csv
+
+
+
+
+
